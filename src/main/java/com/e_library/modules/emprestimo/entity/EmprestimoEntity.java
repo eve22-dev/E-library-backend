@@ -1,6 +1,15 @@
 package com.e_library.modules.emprestimo.entity;
 
-import jakarta.persistence.*;
+import com.e_library.modules.livro.entity.LivroEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -12,54 +21,68 @@ public class EmprestimoEntity {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
-    @Column(name = "user_id", nullable = false)
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "livro_id")
+    private LivroEntity livro;
+
+    @Column(name = "user_id")
     private UUID userId;
 
-    @Column(name = "livro_id", nullable = false)
-    private UUID livroId;
-
-    @Column(name = "data_retirada", nullable = false)
+    @Column(name = "data_retirada")
     private LocalDate dataRetirada;
 
-    @Column(name = "data_prevista", nullable = false)
+    @Column(name = "data_prevista")
     private LocalDate dataPrevista;
 
-    @Column(name = "data_devolucao")
-    private LocalDate dataDevolucao;
+    private String status;
 
-    @Column(nullable = false)
-    private String status; // ex: 'ativo', 'atrasado', 'devolvido'
+    // --- Getters e Setters Limpos ---
 
-    // Construtores
-    public EmprestimoEntity() {}
-
-    public EmprestimoEntity(UUID userId, UUID livroId, LocalDate dataRetirada, LocalDate dataPrevista, String status) {
-        this.userId = userId;
-        this.livroId = livroId;
-        this.dataRetirada = dataRetirada;
-        this.dataPrevista = dataPrevista;
-        this.status = status;
+    public UUID getId() { 
+        return id; 
+    }
+    
+    public void setId(UUID id) { 
+        this.id = id; 
     }
 
-    // Getters e Setters
-    public UUID getId() { return id; }
-    public void setId(UUID id) { this.id = id; }
+    public LivroEntity getLivro() { 
+        return livro; 
+    }
+    
+    public void setLivro(LivroEntity livro) { 
+        this.livro = livro; 
+    }
 
-    public UUID getUserId() { return userId; }
-    public void setUserId(UUID userId) { this.userId = userId; }
+    public UUID getUserId() { 
+        return userId; 
+    }
+    
+    public void setUserId(UUID userId) { 
+        this.userId = userId; 
+    }
 
-    public UUID getLivroId() { return livroId; }
-    public void setLivroId(UUID livroId) { this.livroId = livroId; }
+    public LocalDate getDataRetirada() { 
+        return dataRetirada; 
+    }
+    
+    public void setDataRetirada(LocalDate dataRetirada) { 
+        this.dataRetirada = dataRetirada; 
+    }
 
-    public LocalDate getDataRetirada() { return dataRetirada; }
-    public void setDataRetirada(LocalDate dataRetirada) { this.dataRetirada = dataRetirada; }
+    public LocalDate getDataPrevista() { 
+        return dataPrevista; 
+    }
+    
+    public void setDataPrevista(LocalDate dataPrevista) { 
+        this.dataPrevista = dataPrevista; 
+    }
 
-    public LocalDate getDataPrevista() { return dataPrevista; }
-    public void setDataPrevista(LocalDate dataPrevista) { this.dataPrevista = dataPrevista; }
-
-    public LocalDate getDataDevolucao() { return dataDevolucao; }
-    public void setDataDevolucao(LocalDate dataDevolucao) { this.dataDevolucao = dataDevolucao; }
-
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public String getStatus() { 
+        return status; 
+    }
+    
+    public void setStatus(String status) { 
+        this.status = status; 
+    }
 }
