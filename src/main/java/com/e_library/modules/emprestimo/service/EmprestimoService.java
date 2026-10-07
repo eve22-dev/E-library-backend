@@ -2,6 +2,10 @@ package com.e_library.modules.emprestimo.service;
 
 import com.e_library.modules.emprestimo.entity.EmprestimoEntity;
 import com.e_library.modules.emprestimo.repository.EmprestimoRepository;
+import com.e_library.modules.livro.entity.LivroEntity;
+import com.e_library.modules.livro.repository.LivroRepository;
+import com.e_library.modules.user.entity.UserEntity;
+import com.e_library.modules.user.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -13,23 +17,35 @@ public class EmprestimoService {
 
     private final EmprestimoRepository emprestimoRepository;
 
-    public EmprestimoService(EmprestimoRepository emprestimoRepository) {
+    private final LivroRepository livroRepository;
+
+    private final UserRepository userRepository;
+
+    EmprestimoService(EmprestimoRepository emprestimoRepository, LivroRepository livroRepository, UserRepository userRepository) {
         this.emprestimoRepository = emprestimoRepository;
+        this.livroRepository = livroRepository;
+        this.userRepository = userRepository;
     }
 
     // Realizar uma nova reserva/empréstimo com 14 dias de prazo automático
     public EmprestimoEntity realizarEmprestimo(UUID userId, UUID livroId) {
-        LocalDate hoje = LocalDate.now();
-        LocalDate dataPrevista = hoje.plusDays(14); // 14 dias de prazo
+        
+        // 1. Busca os objetos completos no banco de dados para garantir a integridade relacional
+        UserEntity usuario = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado."));
 
-        EmprestimoEntity novoEmprestimo = new EmprestimoEntity(
-            userId,
-            livroId,
-            hoje,
-            dataPrevista,
-            "ativo"
-        );
+        LivroEntity livro = livroRepository.findById(livroId)
+                .orElseThrow(() -> new RuntimeException("Livro não encontrado."));
 
+        // 2. Instancia a entidade vazia e preenche com os Setters
+        EmprestimoEntity novoEmprestimo = new EmprestimoEntity();
+        novoEmprestimo.setUsuario(usuario);
+        novoEmprestimo.setLivro(livro);
+        novoEmprestimo.setDataRetirada(LocalDate.now());
+        novoEmprestimo.setDataPrevista(LocalDate.now().plusDays(14)); // 14 dias de prazo
+        novoEmprestimo.setStatus("ativo");
+
+        // 3. Salva no banco de dados
         return emprestimoRepository.save(novoEmprestimo);
     }
 
