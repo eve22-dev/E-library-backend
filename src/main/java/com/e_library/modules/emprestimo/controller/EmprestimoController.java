@@ -1,12 +1,13 @@
 package com.e_library.modules.emprestimo.controller;
 
 import com.e_library.modules.emprestimo.entity.EmprestimoEntity;
-import com.e_library.modules.emprestimo.service.EmprestimoService;
+import com.e_library.modules.emprestimo.repository.EmprestimoRepository;
+import com.e_library.modules.livro.entity.LivroEntity;
+import com.e_library.modules.livro.repository.LivroRepository;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -14,31 +15,30 @@ import java.util.UUID;
 @CrossOrigin(origins = "*")
 public class EmprestimoController {
 
-    private final EmprestimoService emprestimoService;
+    private final EmprestimoRepository emprestimoRepository = null;
 
-    public EmprestimoController(EmprestimoService emprestimoService) {
-        this.emprestimoService = emprestimoService;
-    }
+    private final LivroRepository livroRepository = null;
 
-    // Endpoint para o aluno reservar um livro
-    @PostMapping("/reservar")
-    public ResponseEntity<EmprestimoEntity> reservarLivro(@RequestBody Map<String, String> payload) {
-        UUID userId = UUID.fromString(payload.get("user_id"));
-        UUID livroId = UUID.fromString(payload.get("livro_id"));
+    @PutMapping("/{id}/cancelar")
+    public ResponseEntity<String> cancelarReserva(@PathVariable UUID id) {
+        EmprestimoEntity emprestimo = emprestimoRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Empréstimo não encontrado."));
 
-        EmprestimoEntity emprestimo = emprestimoService.realizarEmprestimo(userId, livroId);
-        return ResponseEntity.ok(emprestimo);
-    }
+        // Regra: Não pode cancelar se já foi retirado fisicamente
+        if ("retirado".equalsIgnoreCase(emprestimo.getStatus())) {
+            return ResponseEntity.badRequest().body("Não é possível cancelar um livro que já foi retirado.");
+        }
 
-    // Endpoint para listar os empréstimos de um aluno
-    public List<EmprestimoEntity> listarPorUsuario(@PathVariable UUID userId) {
-        return emprestimoService.listarPorUsuario(userId);
-    }
+        emprestimo.setStatus("cancelado");
+        emprestimoRepository.save(emprestimo);
 
-    // Endpoint para a home/painel do bibliotecário (ordenado por urgência)
-    @GetMapping("/bibliotecario/urgentes")
-    public ResponseEntity<List<EmprestimoEntity>> listarParaBibliotecario() {
-        List<EmprestimoEntity> lista = emprestimoService.listarParaPainelBibliotecario();
-        return ResponseEntity.ok(lista);
+        // Devolve a unidade para o estoque do livro
+        LivroEntity livro = emprestimo.getLivro();
+        if (livro.getQtdDisponivel() != null) {
+            livro.setQtdDisponivel(livro.getQtdDisponivel() + 1);
+            livroRepository.save(livro);
+        }
+
+        return ResponseEntity.ok("Reserva cancelada com sucesso!");
     }
 }
