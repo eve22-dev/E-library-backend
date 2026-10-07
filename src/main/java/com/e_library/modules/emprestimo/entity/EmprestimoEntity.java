@@ -1,6 +1,8 @@
 package com.e_library.modules.emprestimo.entity;
 
 import com.e_library.modules.livro.entity.LivroEntity;
+import com.e_library.modules.user.entity.UserEntity;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -21,18 +23,25 @@ public class EmprestimoEntity {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
+    // Relacionamento com o Livro
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "livro_id")
     private LivroEntity livro;
 
-    @Column(name = "user_id")
-    private UUID userId;
+    // Relacionamento com o Usuário (Ajustado)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private UserEntity usuario;
 
     @Column(name = "data_retirada")
     private LocalDate dataRetirada;
 
     @Column(name = "data_prevista")
     private LocalDate dataPrevista;
+
+    // Campo adicionado que faltava do diagrama
+    @Column(name = "data_devolucao")
+    private LocalDate dataDevolucao;
 
     private String status;
 
@@ -54,12 +63,13 @@ public class EmprestimoEntity {
         this.livro = livro; 
     }
 
-    public UUID getUserId() { 
-        return userId; 
+    // Novos Getters e Setters para o Usuário
+    public UserEntity getUsuario() { 
+        return usuario; 
     }
     
-    public void setUserId(UUID userId) { 
-        this.userId = userId; 
+    public void setUsuario(UserEntity usuario) { 
+        this.usuario = usuario; 
     }
 
     public LocalDate getDataRetirada() { 
@@ -76,6 +86,15 @@ public class EmprestimoEntity {
     
     public void setDataPrevista(LocalDate dataPrevista) { 
         this.dataPrevista = dataPrevista; 
+    }
+
+    // Novos Getters e Setters para Data de Devolução
+    public LocalDate getDataDevolucao() {
+        return dataDevolucao;
+    }
+
+    public void setDataDevolucao(LocalDate dataDevolucao) {
+        this.dataDevolucao = dataDevolucao;
     }
 
     public String getStatus() { 

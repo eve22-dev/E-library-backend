@@ -3,12 +3,9 @@ package com.e_library.modules.emprestimo.repository;
 import com.e_library.modules.emprestimo.entity.EmprestimoEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.stereotype.Repository;
-
 import java.util.List;
 import java.util.UUID;
 
-@Repository
 public interface EmprestimoRepository extends JpaRepository<EmprestimoEntity, UUID> {
 
     // Busca todos os empréstimos de um usuário específico
