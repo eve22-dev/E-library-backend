@@ -23,10 +23,9 @@ public class EmprestimoResponseDTO {
         this.status = entity.getStatus();
         
         // Acede ao relacionamento @ManyToOne de forma segura
-        if (entity.getLivro() != null) {
+       if (entity.getLivro() != null) {
             this.livroId = entity.getLivro().getId();
-            // AQUI FOI CORRIGIDO: Usamos getNome() conforme definido no seu LivroEntity
-            this.tituloLivro = entity.getLivro().getNome(); 
+            this.tituloLivro = entity.getLivro().getTitulo(); // Ajustado para getTitulo()
         }
     }
 

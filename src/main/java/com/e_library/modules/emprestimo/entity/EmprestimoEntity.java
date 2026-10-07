@@ -28,7 +28,7 @@ public class EmprestimoEntity {
     @JoinColumn(name = "livro_id")
     private LivroEntity livro;
 
-    // Relacionamento com o Usuário (Ajustado)
+    // Relacionamento com o Usuário
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private UserEntity usuario;
@@ -39,13 +39,28 @@ public class EmprestimoEntity {
     @Column(name = "data_prevista")
     private LocalDate dataPrevista;
 
-    // Campo adicionado que faltava do diagrama
     @Column(name = "data_devolucao")
     private LocalDate dataDevolucao;
 
     private String status;
 
-    // --- Getters e Setters Limpos ---
+    // --- Construtores ---
+
+    // Construtor vazio obrigatório para o JPA/Hibernate
+    public EmprestimoEntity() {}
+
+    // Construtor completo para satisfazer chamadas no Service
+    public EmprestimoEntity(UUID id, LivroEntity livro, UserEntity usuario, LocalDate dataRetirada, LocalDate dataPrevista, LocalDate dataDevolucao, String status) {
+        this.id = id;
+        this.livro = livro;
+        this.usuario = usuario;
+        this.dataRetirada = dataRetirada;
+        this.dataPrevista = dataPrevista;
+        this.dataDevolucao = dataDevolucao;
+        this.status = status;
+    }
+
+    // --- Getters e Setters ---
 
     public UUID getId() { 
         return id; 
@@ -63,7 +78,6 @@ public class EmprestimoEntity {
         this.livro = livro; 
     }
 
-    // Novos Getters e Setters para o Usuário
     public UserEntity getUsuario() { 
         return usuario; 
     }
@@ -88,7 +102,6 @@ public class EmprestimoEntity {
         this.dataPrevista = dataPrevista; 
     }
 
-    // Novos Getters e Setters para Data de Devolução
     public LocalDate getDataDevolucao() {
         return dataDevolucao;
     }
