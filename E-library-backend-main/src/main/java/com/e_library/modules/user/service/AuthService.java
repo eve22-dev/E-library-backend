@@ -8,13 +8,13 @@ import org.springframework.security.crypto.bcrypt.
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.e_library.modules.user.UserEntity;
-import com.e_library.modules.user.UserRepository;
 import com.e_library.modules.user.dto.AuthResponse;
 import com.e_library.modules.user.dto.LoginRequest;
 import com.e_library.modules.user.dto.RefreshRequest;
 import com.e_library.modules.user.dto.RegisterRequest;
 import com.e_library.modules.user.dto.VerifyRequest;
+import com.e_library.modules.user.entity.UserEntity;
+import com.e_library.modules.user.repository.UserRepository;
 import com.e_library.security.JwtService;
 
 @Service
