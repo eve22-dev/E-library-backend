@@ -1,11 +1,12 @@
 package com.e_library.modules.user.repository;
 
 import java.util.Optional;
-import com.e_library.modules.user.entity.UserEntity;
+import java.util.UUID; // Importação do UUID adicionada
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import com.e_library.modules.user.entity.UserEntity;
 
-public interface UserRepository extends JpaRepository<UserEntity, Long> {
+// Alterado de <UserEntity, Long> para <UserEntity, UUID>
+public interface UserRepository extends JpaRepository<UserEntity, UUID> {
     Optional<UserEntity> findByEmail(String email);
 }
-
