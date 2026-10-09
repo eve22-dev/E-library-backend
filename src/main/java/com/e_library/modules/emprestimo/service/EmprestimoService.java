@@ -51,7 +51,7 @@ public class EmprestimoService {
 
     // Listar empréstimos de um aluno específico
     public List<EmprestimoEntity> listarPorUsuario(UUID userId) {
-        return emprestimoRepository.findByUserId(userId);
+        return emprestimoRepository.findByUsuarioId(userId);
     }
 
     // Listar empréstimos para o painel do bibliotecário (ordenados por urgência/vencimento)
