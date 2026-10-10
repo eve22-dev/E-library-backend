@@ -4,29 +4,28 @@ import jakarta.persistence.*;
 import java.util.UUID;
 
 @Entity
-@Table(name = "livros") // Alterado de "livro" para "livros"
+@Table(name = "livros") 
 public class LivroEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.UUID) 
     private UUID id;
 
-    @Column(name = "titulo", nullable = false) // Alterado de nome para titulo
+    @Column(name = "titulo", nullable = false)
     private String titulo;
 
     @Column(name = "autor", nullable = false)
-    private String autor; // Adicionado do diagrama
+    private String autor; 
 
     @Column(name = "isbn")
-    private String isbn; // Adicionado do diagrama
+    private String isbn; 
 
     @Column(name = "qtd_total")
-    private Integer qtdTotal; // Adicionado do diagrama
+    private Integer qtdTotal; 
 
     @Column(name = "qtd_disponivel")
-    private Integer qtdDisponivel; // Adicionado do diagrama
+    private Integer qtdDisponivel; 
 
-    // RELACIONAMENTO COM A CATEGORIA
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "categoria_id")
     private CategoriaEntity categoria;
@@ -38,10 +37,7 @@ public class LivroEntity {
     @Column(name = "motivo_inatividade", columnDefinition = "TEXT")
     private String motivoInatividade;
 
-    // Construtor vazio obrigatório para o JPA
     public LivroEntity() {}
-
-    // --- GETTERS E SETTERS ---
 
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
@@ -58,8 +54,6 @@ public class LivroEntity {
     public Integer getQtdTotal() { return qtdTotal; }
     public void setQtdTotal(Integer qtdTotal) { this.qtdTotal = qtdTotal; }
 
-    // --- ADICIONADO O QUE FALTAVA ABAIXO ---
-
     public Integer getQtdDisponivel() { return qtdDisponivel; }
     public void setQtdDisponivel(Integer qtdDisponivel) { this.qtdDisponivel = qtdDisponivel; }
 
@@ -71,5 +65,4 @@ public class LivroEntity {
 
     public String getMotivoInatividade() { return motivoInatividade; }
     public void setMotivoInatividade(String motivoInatividade) { this.motivoInatividade = motivoInatividade; }
-
-} // Chave que faltava para fechar a classe
+}

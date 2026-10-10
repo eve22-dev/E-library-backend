@@ -6,11 +6,7 @@ import java.util.List;
 import java.util.UUID;
 
 public interface LivroRepository extends JpaRepository<LivroEntity, UUID> {
-    
-    // Métodos mágicos do Spring Data JPA para o campo de pesquisa com filtros.
-    // O "ContainingIgnoreCase" faz a busca como um "LIKE %termo%" no banco, ignorando maiúsculas e minúsculas.
-    // O "AndAtivoTrue" garante que não traga livros que o bibliotecário desativou.
-    
+
     List<LivroEntity> findByTituloContainingIgnoreCaseAndAtivoTrue(String titulo);
     
     List<LivroEntity> findByAutorContainingIgnoreCaseAndAtivoTrue(String autor);

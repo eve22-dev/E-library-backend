@@ -9,17 +9,28 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.lang.NonNull;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/emprestimos")
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = "*") // Permite que o front-end acesse a API
 public class EmprestimoController {
 
-    private final EmprestimoRepository emprestimoRepository = null;
+    // 1. CORREÇÃO: Sem "= null". Deixe o Spring Boot injetar os repositórios.
+    private final EmprestimoRepository emprestimoRepository;
+    private final LivroRepository livroRepository;
 
-    private final LivroRepository livroRepository = null;
+    // Construtor para Injeção de Dependência do Spring
+    public EmprestimoController(EmprestimoRepository emprestimoRepository, LivroRepository livroRepository) {
+        this.emprestimoRepository = emprestimoRepository;
+        this.livroRepository = livroRepository;
+    }
 
+    // =========================================================
+    // ROTAS DO USUÁRIO (O seu código excelente de cancelamento)
+    // =========================================================
+    
     @PutMapping("/{id}/cancelar")
     public ResponseEntity<String> cancelarReserva(@PathVariable @NonNull UUID id) {
         EmprestimoEntity emprestimo = emprestimoRepository.findById(id)
@@ -35,11 +46,44 @@ public class EmprestimoController {
 
         // Devolve a unidade para o estoque do livro
         LivroEntity livro = emprestimo.getLivro();
-        if (livro.getQtdDisponivel() != null) {
+        if (livro != null && livro.getQtdDisponivel() != null) {
             livro.setQtdDisponivel(livro.getQtdDisponivel() + 1);
             livroRepository.save(livro);
         }
 
         return ResponseEntity.ok("Reserva cancelada com sucesso!");
+    }
+
+    // =========================================================
+    // ROTAS DO BIBLIOTECÁRIO (Para funcionar o Painel)
+    // =========================================================
+
+    // Lista as solicitações pendentes para o bibliotecário ver
+    @GetMapping("/solicitados")
+    public ResponseEntity<List<EmprestimoEntity>> listarSolicitados() {
+        // Atenção: Certifique-se de que no seu banco salva minúsculo "solicitado" ou maiúsculo "SOLICITADO"
+        List<EmprestimoEntity> solicitados = emprestimoRepository.findByStatus("solicitado");
+        return ResponseEntity.ok(solicitados);
+    }
+
+    // Botão "Marcar como Retirado" que o bibliotecário aperta quando entrega o livro físico
+    @PutMapping("/{id}/retirar")
+    public ResponseEntity<String> marcarComoRetirado(@PathVariable @NonNull UUID id) {
+        EmprestimoEntity emprestimo = emprestimoRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Empréstimo não encontrado."));
+
+        // Regra extra: não pode retirar se o usuário já tiver cancelado antes
+        if ("cancelado".equalsIgnoreCase(emprestimo.getStatus())) {
+            return ResponseEntity.badRequest().body("Não é possível retirar um livro cuja reserva foi cancelada.");
+        }
+
+        emprestimo.setStatus("retirado");
+        
+        // Se no futuro você adicionar 'dataRetirada' na entidade, você pode setar aqui:
+        // emprestimo.setDataRetirada(LocalDate.now());
+
+        emprestimoRepository.save(emprestimo);
+
+        return ResponseEntity.ok("Livro marcado como retirado com sucesso!");
     }
 }
