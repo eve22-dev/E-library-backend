@@ -49,6 +49,9 @@ public class LivroController {
             case "isbn":
                 resultados = livroRepository.findByIsbnContainingIgnoreCaseAndAtivoTrue(termo);
                 break;
+            case "editora": // <--- NOVO CASO ADICIONADO AQUI
+                resultados = livroRepository.findByEditoraContainingIgnoreCaseAndAtivoTrue(termo);
+                break;
             case "titulo":
             default:
                 resultados = livroRepository.findByTituloContainingIgnoreCaseAndAtivoTrue(termo);

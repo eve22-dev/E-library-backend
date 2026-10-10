@@ -30,12 +30,14 @@ public class LivroEntity {
     @JoinColumn(name = "categoria_id")
     private CategoriaEntity categoria;
 
-    // CAMPOS PARA A REGRA DO BIBLIOTECÁRIO CANCELAR/DESATIVAR
     @Column(name = "ativo")
     private Boolean ativo = true;
 
     @Column(name = "motivo_inatividade", columnDefinition = "TEXT")
     private String motivoInatividade;
+
+    @Column(name = "editora")
+    private String editora;
 
     public LivroEntity() {}
 
@@ -65,4 +67,7 @@ public class LivroEntity {
 
     public String getMotivoInatividade() { return motivoInatividade; }
     public void setMotivoInatividade(String motivoInatividade) { this.motivoInatividade = motivoInatividade; }
+
+    public String getEditora() { return editora; }
+    public void setEditora(String editora) { this.editora = editora; }
 }
