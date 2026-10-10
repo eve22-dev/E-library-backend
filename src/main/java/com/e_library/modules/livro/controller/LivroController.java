@@ -15,9 +15,12 @@ import java.util.UUID;
 @CrossOrigin(origins = "*")
 public class LivroController {
 
-    private final LivroRepository livroRepository = null;
+    private final LivroRepository livroRepository;
 
-    // 1. Desativar livro com motivo (Visão do Bibliotecário)
+    public LivroController(LivroRepository livroRepository) {
+        this.livroRepository = livroRepository;
+    }
+
     @PutMapping("/{id}/desativar")
     public ResponseEntity<String> desativarLivro(@PathVariable @NonNull UUID id, @RequestBody Map<String, String> payload) {
         String motivo = payload.get("motivo");
@@ -29,10 +32,9 @@ public class LivroController {
         livro.setMotivoInatividade(motivo);
         livroRepository.save(livro);
 
-        return ResponseEntity.ok("Livro desativado com sucesso. Motivo registrado.");
+        return ResponseEntity.ok("Livro desativado com sucesso. Motivo registado.");
     }
 
-    // 2. Pesquisa dinâmica com filtros (Visão do Usuário)
     @GetMapping("/pesquisa")
     public ResponseEntity<List<LivroEntity>> pesquisarLivros(
             @RequestParam String filtro, 
@@ -40,7 +42,6 @@ public class LivroController {
         
         List<LivroEntity> resultados;
 
-        // Verifica qual filtro o usuário selecionou no dropdown
         switch (filtro.toLowerCase()) {
             case "autor":
                 resultados = livroRepository.findByAutorContainingIgnoreCaseAndAtivoTrue(termo);
@@ -56,9 +57,15 @@ public class LivroController {
 
         return ResponseEntity.ok(resultados);
     }
+
     @PostMapping
     public ResponseEntity<LivroEntity> cadastrarLivro(@RequestBody LivroEntity novoLivro) {
         novoLivro.setAtivo(true);
+        
+        if (novoLivro.getQtdTotal() != null) {
+            novoLivro.setQtdDisponivel(novoLivro.getQtdTotal());
+        }
+        
         LivroEntity salvo = livroRepository.save(novoLivro);
         return ResponseEntity.ok(salvo);
     }

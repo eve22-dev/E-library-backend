@@ -8,9 +8,10 @@ import java.util.UUID;
 
 public interface EmprestimoRepository extends JpaRepository<EmprestimoEntity, UUID> {
 
-    // Busca todos os empréstimos de um usuário específico
+    List<EmprestimoEntity> findByStatus(String status);    
+
     List<EmprestimoEntity> findByUsuarioId(UUID usuarioId);
-    // Busca empréstimos ordenados por data prevista (os mais urgentes primeiro para o painel do bibliotecário)
+    
     @Query("SELECT e FROM EmprestimoEntity e WHERE e.status = 'ativo' ORDER BY e.dataPrevista ASC")
     List<EmprestimoEntity> findAllAtivosOrdenadosPorUrgencia();
     
