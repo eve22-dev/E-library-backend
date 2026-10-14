@@ -34,9 +34,9 @@ public class SecurityConfig {
                 .requestMatchers("/auth/**").permitAll()
                 
                 // EXIGE PAPEL DE BIBLIOTECÁRIO PARA CRIAR, EDITAR OU DELETAR LIVROS E CATEGORIAS
-                .requestMatchers(HttpMethod.POST, "/api/livros/**").hasAnyAuthority("BIBLIOTECARIO", "ROLE_BIBLIOTECARIO")
-                .requestMatchers(HttpMethod.PUT, "/api/livros/**").hasAnyAuthority("BIBLIOTECARIO", "ROLE_BIBLIOTECARIO")
-                .requestMatchers(HttpMethod.DELETE, "/api/livros/**").hasAnyAuthority("BIBLIOTECARIO", "ROLE_BIBLIOTECARIO")
+                .requestMatchers(HttpMethod.POST, "/api/livros/**").hasAnyAuthority("BIBLIOTECARIO", "bibliotecario", "ROLE_BIBLIOTECARIO", "ROLE_bibliotecario")
+                .requestMatchers(HttpMethod.PUT, "/api/livros/**").hasAnyAuthority("BIBLIOTECARIO", "bibliotecario", "ROLE_BIBLIOTECARIO", "ROLE_bibliotecario")
+                .requestMatchers(HttpMethod.DELETE, "/api/livros/**").hasAnyAuthority("BIBLIOTECARIO", "bibliotecario", "ROLE_BIBLIOTECARIO", "ROLE_bibliotecario")
                 
                 // PERMITE QUE QUALQUER UTILIZADOR LOGADO (ALUNOS) POSSA APENAS LER/VER OS LIVROS E CATEGORIAS
                 .requestMatchers(HttpMethod.GET, "/api/livros/**").authenticated()

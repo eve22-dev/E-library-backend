@@ -57,17 +57,15 @@ public class JwtService {
     }
 
     public String extractEmail(String token) {
-
-        return extractClaims(token).getSubject();
-    }
-
-    private Claims extractClaims(String token) {
-
-        return Jwts.parser()
-                .verifyWith(key)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
+        Claims claims = extractClaims(token);
+        
+        String email = claims.get("email", String.class);
+        
+        if (email == null) {
+            email = claims.getSubject();
+        }
+        
+        return email;
     }
 
     public boolean isValid(String token) {
