@@ -1,6 +1,8 @@
 package com.e_library.modules.livro.controller;
 
+import com.e_library.modules.livro.entity.CategoriaEntity;
 import com.e_library.modules.livro.entity.LivroEntity;
+import com.e_library.modules.livro.repository.CategoriaRepository;
 import com.e_library.modules.livro.repository.LivroRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.NonNull;
@@ -12,15 +14,37 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/livros")
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = "*") 
 public class LivroController {
 
     private final LivroRepository livroRepository;
+    private final CategoriaRepository categoriaRepository;
 
-    public LivroController(LivroRepository livroRepository) {
+    // Construtor para Injeção de Dependência
+    public LivroController(LivroRepository livroRepository, CategoriaRepository categoriaRepository) {
         this.livroRepository = livroRepository;
+        this.categoriaRepository = categoriaRepository;
     }
 
+    // 1. Cadastrar Categoria (Visão do Bibliotecário)
+    @PostMapping("/categorias")
+    public ResponseEntity<CategoriaEntity> cadastrarCategoria(@RequestBody CategoriaEntity categoria) {
+        CategoriaEntity salva = categoriaRepository.save(categoria);
+        return ResponseEntity.ok(salva);
+    }
+
+    // 2. Cadastrar Livro (Visão do Bibliotecário)
+    @PostMapping
+    public ResponseEntity<LivroEntity> cadastrarLivro(@RequestBody LivroEntity novoLivro) {
+        novoLivro.setAtivo(true);
+        if (novoLivro.getQtdTotal() != null) {
+            novoLivro.setQtdDisponivel(novoLivro.getQtdTotal());
+        }
+        LivroEntity salvo = livroRepository.save(novoLivro);
+        return ResponseEntity.ok(salvo);
+    }
+
+    // 3. Desativar livro com motivo (Visão do Bibliotecário)
     @PutMapping("/{id}/desativar")
     public ResponseEntity<String> desativarLivro(@PathVariable @NonNull UUID id, @RequestBody Map<String, String> payload) {
         String motivo = payload.get("motivo");
@@ -35,6 +59,7 @@ public class LivroController {
         return ResponseEntity.ok("Livro desativado com sucesso. Motivo registado.");
     }
 
+    // 4. Pesquisa dinâmica com filtros (Visão do Usuário)
     @GetMapping("/pesquisa")
     public ResponseEntity<List<LivroEntity>> pesquisarLivros(
             @RequestParam String filtro, 
@@ -49,7 +74,7 @@ public class LivroController {
             case "isbn":
                 resultados = livroRepository.findByIsbnContainingIgnoreCaseAndAtivoTrue(termo);
                 break;
-            case "editora": // <--- NOVO CASO ADICIONADO AQUI
+            case "editora":
                 resultados = livroRepository.findByEditoraContainingIgnoreCaseAndAtivoTrue(termo);
                 break;
             case "titulo":
@@ -59,17 +84,5 @@ public class LivroController {
         }
 
         return ResponseEntity.ok(resultados);
-    }
-
-    @PostMapping
-    public ResponseEntity<LivroEntity> cadastrarLivro(@RequestBody LivroEntity novoLivro) {
-        novoLivro.setAtivo(true);
-        
-        if (novoLivro.getQtdTotal() != null) {
-            novoLivro.setQtdDisponivel(novoLivro.getQtdTotal());
-        }
-        
-        LivroEntity salvo = livroRepository.save(novoLivro);
-        return ResponseEntity.ok(salvo);
     }
 }
