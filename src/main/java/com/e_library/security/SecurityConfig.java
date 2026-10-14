@@ -30,14 +30,17 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // 1. PERMITE O PEDIDO DE "VERIFICAÇÃO" (OPTIONS) DO NAVEGADOR
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() 
-                .requestMatchers(
-                    "/auth/login",
-                    "/auth/register",
-                    "/auth/refresh",
-                    "/auth/verify"
-                ).permitAll()
+                .requestMatchers("/auth/**").permitAll()
+                
+                // EXIGE PAPEL DE BIBLIOTECÁRIO PARA CRIAR, EDITAR OU DELETAR LIVROS E CATEGORIAS
+                .requestMatchers(HttpMethod.POST, "/api/livros/**").hasAnyAuthority("BIBLIOTECARIO", "ROLE_BIBLIOTECARIO")
+                .requestMatchers(HttpMethod.PUT, "/api/livros/**").hasAnyAuthority("BIBLIOTECARIO", "ROLE_BIBLIOTECARIO")
+                .requestMatchers(HttpMethod.DELETE, "/api/livros/**").hasAnyAuthority("BIBLIOTECARIO", "ROLE_BIBLIOTECARIO")
+                
+                // PERMITE QUE QUALQUER UTILIZADOR LOGADO (ALUNOS) POSSA APENAS LER/VER OS LIVROS E CATEGORIAS
+                .requestMatchers(HttpMethod.GET, "/api/livros/**").authenticated()
+                
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
@@ -50,11 +53,10 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    // 2. CONFIGURAÇÃO GLOBAL DE CORS PARA CONVERSAR COM A VERCEL
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(Arrays.asList("*")); // Permite a Vercel e o Localhost
+        configuration.setAllowedOriginPatterns(Arrays.asList("*")); 
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
         configuration.setAllowCredentials(true);
