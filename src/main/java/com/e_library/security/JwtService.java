@@ -16,46 +16,31 @@ public class JwtService {
 
     private final SecretKey key;
 
-    public JwtService(
-            @Value("${jwt.secret}") String secret
-    ) {
-
-        this.key =
-                Keys.hmacShaKeyFor(secret.getBytes());
+    public JwtService(@Value("${jwt.secret}") String secret) {
+        this.key = Keys.hmacShaKeyFor(secret.getBytes());
     }
 
     public String generateAccessToken(String email) {
-
         return Jwts.builder()
                 .subject(email)
                 .claim("type", "access")
                 .issuedAt(new Date())
-                .expiration(
-                        new Date(
-                                System.currentTimeMillis()
-                                        + 1000L * 60 * 15
-                        )
-                )
+                .expiration(new Date(System.currentTimeMillis() + 1000L * 60 * 15))
                 .signWith(key)
                 .compact();
     }
 
     public String generateRefreshToken(String email) {
-
         return Jwts.builder()
                 .subject(email)
                 .claim("type", "refresh")
                 .issuedAt(new Date())
-                .expiration(
-                        new Date(
-                                System.currentTimeMillis()
-                                        + 1000L * 60 * 60 * 24 * 7
-                        )
-                )
+                .expiration(new Date(System.currentTimeMillis() + 1000L * 60 * 60 * 24 * 7))
                 .signWith(key)
                 .compact();
     }
 
+    // 1. Extrai o email, verificando o padrão do Supabase primeiro
     public String extractEmail(String token) {
         Claims claims = extractClaims(token);
         
@@ -68,16 +53,20 @@ public class JwtService {
         return email;
     }
 
+    // 2. O MÉTODO QUE ESTAVA A FALTAR! Ele é essencial para o Java decifrar o token
+    private Claims extractClaims(String token) {
+        return Jwts.parser()
+                .verifyWith(key)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+    }
+
     public boolean isValid(String token) {
-
         try {
-
             extractClaims(token);
-
             return true;
-
         } catch (Exception e) {
-
             return false;
         }
     }
