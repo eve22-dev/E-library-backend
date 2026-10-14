@@ -1,4 +1,4 @@
-package main.java.com.e_library.modules.livro.repository;
+package com.e_library.modules.livro.repository;
 
 import com.e_library.modules.livro.entity.CategoriaEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
