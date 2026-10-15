@@ -12,6 +12,7 @@ import org.springframework.security.core.context.
         SecurityContextHolder;
 
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import org.springframework.security.web.authentication.
         WebAuthenticationDetailsSource;
@@ -31,12 +32,16 @@ public class JwtFilter extends OncePerRequestFilter {
 
     private final CustomUserDetailsService userDetailsService;
 
+    private final SupabaseAuthClient supabaseAuth;
+
     public JwtFilter(
             JwtService jwtService,
-            CustomUserDetailsService userDetailsService
+            CustomUserDetailsService userDetailsService,
+            SupabaseAuthClient supabaseAuth
     ) {
         this.jwtService = jwtService;
         this.userDetailsService = userDetailsService;
+        this.supabaseAuth = supabaseAuth;
     }
 
     @Override
@@ -59,16 +64,29 @@ public class JwtFilter extends OncePerRequestFilter {
         String token =
                 authHeader.substring(7);
 
-        if (!jwtService.isValid(token)) {
+        // 1) token emitido pelo próprio back; 2) token do login do Supabase
+        String email = null;
+
+        if (jwtService.isValid(token)) {
+            email = jwtService.extractEmail(token);
+        } else {
+            email = supabaseAuth.emailFromAccessToken(token);
+        }
+
+        if (email == null) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        String email =
-                jwtService.extractEmail(token);
+        UserDetails userDetails;
 
-        UserDetails userDetails =
-                userDetailsService.loadUserByUsername(email);
+        try {
+            // carrega o papel (aluno/professor/bibliotecario) da tabela usuarios
+            userDetails = userDetailsService.loadUserByUsername(email);
+        } catch (UsernameNotFoundException e) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         UsernamePasswordAuthenticationToken authToken =
                 new UsernamePasswordAuthenticationToken(
