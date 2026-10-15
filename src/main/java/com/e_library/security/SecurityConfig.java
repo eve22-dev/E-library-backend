@@ -44,6 +44,10 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.PUT, "/api/livros/**").hasAnyAuthority("BIBLIOTECARIO", "bibliotecario", "ROLE_BIBLIOTECARIO", "ROLE_bibliotecario")
                 .requestMatchers(HttpMethod.DELETE, "/api/livros/**").hasAnyAuthority("BIBLIOTECARIO", "bibliotecario", "ROLE_BIBLIOTECARIO", "ROLE_bibliotecario")
                 
+                // PAINEL DO BIBLIOTECÁRIO: listar solicitações/emprestados, entregar e registrar devolução
+                .requestMatchers(HttpMethod.GET, "/api/emprestimos/solicitados", "/api/emprestimos/retirados", "/api/emprestimos/renegociacoes", "/api/multas").hasAuthority("ROLE_BIBLIOTECARIO")
+                .requestMatchers(HttpMethod.PUT, "/api/emprestimos/*/retirar", "/api/emprestimos/*/devolver", "/api/emprestimos/*/extravio", "/api/emprestimos/*/renegociacao/*").hasAuthority("ROLE_BIBLIOTECARIO")
+
                 // PERMITE QUE QUALQUER UTILIZADOR LOGADO (ALUNOS) POSSA APENAS LER/VER OS LIVROS E CATEGORIAS
                 .requestMatchers(HttpMethod.GET, "/api/livros/**").authenticated()
                 
