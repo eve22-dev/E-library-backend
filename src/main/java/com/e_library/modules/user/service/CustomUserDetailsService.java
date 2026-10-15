@@ -27,11 +27,13 @@ public class CustomUserDetailsService
                         new UsernameNotFoundException("User not found")
                 );
 
+        // papel no banco: aluno / professor / bibliotecario
+        // vira ROLE_ALUNO / ROLE_PROFESSOR / ROLE_BIBLIOTECARIO no Spring Security
         return org.springframework.security.core.userdetails.User
                 .builder()
                 .username(user.getEmail())
-                .password(user.getPassword())
-                .roles(user.getRole().name())
+                .password(user.getPassword() == null ? "" : user.getPassword())
+                .roles(user.getRole().toUpperCase())
                 .build();
     }
 }

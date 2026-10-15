@@ -3,7 +3,6 @@ package com.e_library.modules.user.entity;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
-import com.e_library.enums.Role;
 
 @Entity
 @Table(name = "usuarios") // Alterado para bater com o banco
@@ -23,9 +22,9 @@ public class UserEntity {
     // mas lembre-se que seu banco liga com auth.users do Supabase.
     private String password;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "papel") // Mapeando para a coluna 'papel' no banco
-    private Role role = Role.USER;
+    // aluno | professor | bibliotecario (mesmos valores da coluna 'papel')
+    @Column(name = "papel")
+    private String role = "aluno";
 
     @Column(name = "ativo")
     private Boolean active = true;
@@ -59,8 +58,8 @@ public class UserEntity {
     public String getPassword() { return password; }
     public void setPassword(String password) { this.password = password; }
 
-    public Role getRole() { return role; }
-    public void setRole(Role role) { this.role = role; }
+    public String getRole() { return role; }
+    public void setRole(String role) { this.role = role; }
 
     public Boolean getActive() { return active; }
     public void setActive(Boolean active) { this.active = active; }
