@@ -3,6 +3,7 @@ package com.e_library.modules.user.entity;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name = "usuarios") // Alterado para bater com o banco
@@ -20,6 +21,7 @@ public class UserEntity {
 
     // Vou manter a senha aqui caso você faça a validação internamente, 
     // mas lembre-se que seu banco liga com auth.users do Supabase.
+    @JsonIgnore
     private String password;
 
     // aluno | professor | bibliotecario (mesmos valores da coluna 'papel')

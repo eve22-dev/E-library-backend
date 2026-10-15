@@ -44,4 +44,15 @@ public class CategoriaEntity {
     public void setDescricao(String descricao) { 
         this.descricao = descricao; 
     }
+
+    @Column(name = "ativo")
+    private Boolean ativo = true;
+
+    @Column(name = "motivo_inatividade", columnDefinition = "TEXT")
+    private String motivoInatividade;
+
+    public Boolean getAtivo() { return ativo; }
+    public void setAtivo(Boolean ativo) { this.ativo = ativo; }
+    public String getMotivoInatividade() { return motivoInatividade; }
+    public void setMotivoInatividade(String motivoInatividade) { this.motivoInatividade = motivoInatividade; }
 }

@@ -26,7 +26,7 @@ public class LivroEntity {
     @Column(name = "qtd_disponivel")
     private Integer qtdDisponivel; 
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "categoria_id")
     private CategoriaEntity categoria;
 

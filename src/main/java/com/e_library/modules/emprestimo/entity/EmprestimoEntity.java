@@ -29,7 +29,7 @@ public class EmprestimoEntity {
     private LivroEntity livro;
 
     // Relacionamento com o Usuário
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id")
     private UserEntity usuario;
 
