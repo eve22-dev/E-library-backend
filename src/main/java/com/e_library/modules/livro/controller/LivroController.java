@@ -32,7 +32,21 @@ public class LivroController {
         CategoriaEntity salva = categoriaRepository.save(categoria);
         return ResponseEntity.ok(salva);
     }
+    // Editar Categoria (Visão do Bibliotecário)
+    @PutMapping("/categorias/{id}")
+    public ResponseEntity<?> editarCategoria(@PathVariable @NonNull UUID id, @RequestBody CategoriaEntity dados) {
+        if (dados.getNome() == null || dados.getNome().isBlank()) {
+        return ResponseEntity.badRequest().body("O nome da categoria é obrigatório.");
+    }
 
+    CategoriaEntity categoria = categoriaRepository.findById(id)
+        .orElseThrow(() -> new RuntimeException("Categoria não encontrada."));
+
+    categoria.setNome(dados.getNome().trim());
+    categoria.setDescricao(dados.getDescricao());
+
+    return ResponseEntity.ok(categoriaRepository.save(categoria));
+    }
     // 2. Cadastrar Livro (Visão do Bibliotecário)
     @PostMapping
     public ResponseEntity<LivroEntity> cadastrarLivro(@RequestBody LivroEntity novoLivro) {

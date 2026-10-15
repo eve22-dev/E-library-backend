@@ -4,6 +4,7 @@ import com.e_library.modules.emprestimo.entity.EmprestimoEntity;
 import com.e_library.modules.emprestimo.repository.EmprestimoRepository;
 import com.e_library.modules.livro.entity.LivroEntity;
 import com.e_library.modules.livro.repository.LivroRepository;
+import org.springframework.security.core.Authentication;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.NonNull;
@@ -32,27 +33,39 @@ public class EmprestimoController {
     // =========================================================
     
     @PutMapping("/{id}/cancelar")
-    public ResponseEntity<String> cancelarReserva(@PathVariable @NonNull UUID id) {
-        EmprestimoEntity emprestimo = emprestimoRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Empréstimo não encontrado."));
+public ResponseEntity<String> cancelarReserva(@PathVariable @NonNull UUID id, Authentication auth) {
+    EmprestimoEntity emprestimo = emprestimoRepository.findById(id)
+        .orElseThrow(() -> new RuntimeException("Empréstimo não encontrado."));
 
-        // Regra: Não pode cancelar se já foi retirado fisicamente
-        if ("retirado".equalsIgnoreCase(emprestimo.getStatus())) {
-            return ResponseEntity.badRequest().body("Não é possível cancelar um livro que já foi retirado.");
-        }
+    boolean ehBibliotecario = auth.getAuthorities().stream()
+        .anyMatch(a -> a.getAuthority().equalsIgnoreCase("ROLE_BIBLIOTECARIO"));
 
-        emprestimo.setStatus("cancelado");
-        emprestimoRepository.save(emprestimo);
+    boolean ehDono = emprestimo.getUsuario() != null
+        && auth.getName().equalsIgnoreCase(emprestimo.getUsuario().getEmail());
 
-        // Devolve a unidade para o estoque do livro
-        LivroEntity livro = emprestimo.getLivro();
-        if (livro != null && livro.getQtdDisponivel() != null) {
-            livro.setQtdDisponivel(livro.getQtdDisponivel() + 1);
-            livroRepository.save(livro);
-        }
-
-        return ResponseEntity.ok("Reserva cancelada com sucesso!");
+    if (!ehDono && !ehBibliotecario) {
+        return ResponseEntity.status(403).body("Você não pode cancelar a reserva de outro usuário.");
     }
+
+    // Só cancela enquanto o livro ainda não foi retirado
+    if (!"solicitado".equalsIgnoreCase(emprestimo.getStatus())) {
+        return ResponseEntity.badRequest().body("Só é possível cancelar reservas que ainda não foram retiradas.");
+    }
+
+    emprestimo.setStatus("cancelado");
+    emprestimoRepository.save(emprestimo);
+
+    // Devolve a unidade ao estoque, sem passar do total
+    LivroEntity livro = emprestimo.getLivro();
+    if (livro != null && livro.getQtdDisponivel() != null) {
+        int novo = livro.getQtdDisponivel() + 1;
+        if (livro.getQtdTotal() != null) novo = Math.min(novo, livro.getQtdTotal());
+        livro.setQtdDisponivel(novo);
+        livroRepository.save(livro);
+    }
+
+    return ResponseEntity.ok("Reserva cancelada com sucesso!");
+}
 
     // =========================================================
     // ROTAS DO BIBLIOTECÁRIO (Para funcionar o Painel)
