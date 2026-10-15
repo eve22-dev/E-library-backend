@@ -44,6 +44,13 @@ public class EmprestimoEntity {
 
     private String status;
 
+    // Renegociação de prazo: null (nunca pediu), pendente, aprovada ou recusada
+    @Column(name = "renegociacao_status")
+    private String renegociacaoStatus;
+
+    @Column(name = "renegociacao_em")
+    private LocalDate renegociacaoEm;
+
     // --- Construtores ---
 
     // Construtor vazio obrigatório para o JPA/Hibernate
@@ -62,59 +69,30 @@ public class EmprestimoEntity {
 
     // --- Getters e Setters ---
 
-    public UUID getId() { 
-        return id; 
-    }
-    
-    public void setId(UUID id) { 
-        this.id = id; 
-    }
+    public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
 
-    public LivroEntity getLivro() { 
-        return livro; 
-    }
-    
-    public void setLivro(LivroEntity livro) { 
-        this.livro = livro; 
-    }
+    public LivroEntity getLivro() { return livro; }
+    public void setLivro(LivroEntity livro) { this.livro = livro; }
 
-    public UserEntity getUsuario() { 
-        return usuario; 
-    }
-    
-    public void setUsuario(UserEntity usuario) { 
-        this.usuario = usuario; 
-    }
+    public UserEntity getUsuario() { return usuario; }
+    public void setUsuario(UserEntity usuario) { this.usuario = usuario; }
 
-    public LocalDate getDataRetirada() { 
-        return dataRetirada; 
-    }
-    
-    public void setDataRetirada(LocalDate dataRetirada) { 
-        this.dataRetirada = dataRetirada; 
-    }
+    public LocalDate getDataRetirada() { return dataRetirada; }
+    public void setDataRetirada(LocalDate dataRetirada) { this.dataRetirada = dataRetirada; }
 
-    public LocalDate getDataPrevista() { 
-        return dataPrevista; 
-    }
-    
-    public void setDataPrevista(LocalDate dataPrevista) { 
-        this.dataPrevista = dataPrevista; 
-    }
+    public LocalDate getDataPrevista() { return dataPrevista; }
+    public void setDataPrevista(LocalDate dataPrevista) { this.dataPrevista = dataPrevista; }
 
-    public LocalDate getDataDevolucao() {
-        return dataDevolucao;
-    }
+    public LocalDate getDataDevolucao() { return dataDevolucao; }
+    public void setDataDevolucao(LocalDate dataDevolucao) { this.dataDevolucao = dataDevolucao; }
 
-    public void setDataDevolucao(LocalDate dataDevolucao) {
-        this.dataDevolucao = dataDevolucao;
-    }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 
-    public String getStatus() { 
-        return status; 
-    }
-    
-    public void setStatus(String status) { 
-        this.status = status; 
-    }
+    public String getRenegociacaoStatus() { return renegociacaoStatus; }
+    public void setRenegociacaoStatus(String renegociacaoStatus) { this.renegociacaoStatus = renegociacaoStatus; }
+
+    public LocalDate getRenegociacaoEm() { return renegociacaoEm; }
+    public void setRenegociacaoEm(LocalDate renegociacaoEm) { this.renegociacaoEm = renegociacaoEm; }
 }
