@@ -14,4 +14,6 @@ public interface LivroRepository extends JpaRepository<LivroEntity, UUID> {
     List<LivroEntity> findByIsbnContainingIgnoreCaseAndAtivoTrue(String isbn);
     
     List<LivroEntity> findByEditoraContainingIgnoreCaseAndAtivoTrue(String editora);
+
+    boolean existsByCategoria_IdAndAtivoTrue(UUID categoriaId);
 }

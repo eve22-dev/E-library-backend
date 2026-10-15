@@ -47,6 +47,28 @@ public class LivroController {
 
     return ResponseEntity.ok(categoriaRepository.save(categoria));
     }
+
+    // Excluir (desativar) Categoria com motivo (Visão do Bibliotecário)
+    @PutMapping("/categorias/{id}/desativar")
+    public ResponseEntity<String> desativarCategoria(@PathVariable @NonNull UUID id, @RequestBody Map<String, String> payload) {
+    String motivo = payload.get("motivo");
+    if (motivo == null || motivo.isBlank()) {
+        return ResponseEntity.badRequest().body("O motivo é obrigatório.");
+    }
+
+    CategoriaEntity categoria = categoriaRepository.findById(id)
+        .orElseThrow(() -> new RuntimeException("Categoria não encontrada."));
+
+    if (livroRepository.existsByCategoria_IdAndAtivoTrue(id)) {
+        return ResponseEntity.badRequest().body("Ainda existem livros ativos nesta categoria. Desative ou mude a categoria desses livros antes.");
+    }
+
+    categoria.setAtivo(false);
+    categoria.setMotivoInatividade(motivo.trim());
+    categoriaRepository.save(categoria);
+
+    return ResponseEntity.ok("Categoria excluída com sucesso.");
+    }
     // 2. Cadastrar Livro (Visão do Bibliotecário)
     @PostMapping
     public ResponseEntity<LivroEntity> cadastrarLivro(@RequestBody LivroEntity novoLivro) {
