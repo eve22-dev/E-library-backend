@@ -27,7 +27,6 @@ public class MultaController {
         this.userRepository = userRepository;
     }
 
-    // Multas do usuário logado
     @GetMapping("/minhas")
     public ResponseEntity<List<MultaEntity>> minhas(Authentication auth) {
         UserEntity usuario = userRepository.findByEmail(auth.getName()).orElse(null);
