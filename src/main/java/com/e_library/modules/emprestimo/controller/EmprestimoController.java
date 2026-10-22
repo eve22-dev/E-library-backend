@@ -4,6 +4,7 @@ import com.e_library.modules.emprestimo.dto.EmprestimoResponseDTO;
 import com.e_library.modules.emprestimo.entity.EmprestimoEntity;
 import com.e_library.modules.emprestimo.repository.EmprestimoRepository;
 import com.e_library.modules.emprestimo.service.EmprestimoService;
+import com.e_library.modules.exemplar.entity.ExemplarEntity;
 import com.e_library.modules.livro.entity.LivroEntity;
 import com.e_library.modules.livro.repository.LivroRepository;
 import com.e_library.modules.multa.entity.MultaEntity;
@@ -124,6 +125,12 @@ public class EmprestimoController {
             emprestimoRepository.findByStatusInOrderByDataPrevistaAsc(List.of("retirado", "atrasado")));
     }
 
+    // Livros extraviados aguardando reposição (ou baixa)
+    @GetMapping("/extraviados")
+    public ResponseEntity<List<EmprestimoEntity>> listarExtraviados() {
+        return ResponseEntity.ok(emprestimoRepository.findByStatus("extraviado"));
+    }
+
     // Pedidos de renegociação aguardando decisão
     @GetMapping("/renegociacoes")
     public ResponseEntity<List<EmprestimoEntity>> listarRenegociacoes() {
@@ -169,32 +176,57 @@ public class EmprestimoController {
         }
     }
 
-    // Livro extraviado: o exemplar sai do acervo
+    // Livro extraviado: o atraso congela e abre 30 dias para o usuário repor o exemplar
     @PutMapping("/{id}/extravio")
     public ResponseEntity<String> registrarExtravio(@PathVariable @NonNull UUID id) {
         try {
-            emprestimoService.registrarExtravio(id);
-            return ResponseEntity.ok("Extravio registrado. O exemplar foi removido do total do acervo.");
+            MultaEntity multa = emprestimoService.registrarExtravio(id);
+
+            String msg = "Extravio registrado. O usuário tem 30 dias para entregar um exemplar novo.";
+
+            if (multa != null) {
+                msg += String.format(new Locale("pt", "BR"),
+                    " Multa do atraso até hoje (%d dia(s)): R$ %.2f.", multa.getDiasAtraso(), multa.getValor());
+            }
+
+            return ResponseEntity.ok(msg);
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(e.getReason());
         }
     }
 
-    // Botão "Entregar" que o bibliotecário aperta quando entrega o livro físico
-    @PutMapping("/{id}/retirar")
-    public ResponseEntity<String> marcarComoRetirado(@PathVariable @NonNull UUID id) {
-        EmprestimoEntity emprestimo = emprestimoRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Empréstimo não encontrado."));
-
-        // Regra extra: não pode retirar se o usuário já tiver cancelado antes
-        if ("cancelado".equalsIgnoreCase(emprestimo.getStatus())) {
-            return ResponseEntity.badRequest().body("Não é possível retirar um livro cuja reserva foi cancelada.");
+    // Usuário entregou um exemplar novo: fecha a ocorrência de extravio
+    @PutMapping("/{id}/reposicao")
+    public ResponseEntity<String> registrarReposicao(@PathVariable @NonNull UUID id,
+                                                     @RequestBody Map<String, String> payload) {
+        try {
+            emprestimoService.registrarReposicao(id, payload.get("codigoExemplar"));
+            return ResponseEntity.ok("Reposição registrada. O exemplar novo já está disponível no acervo.");
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(e.getReason());
         }
+    }
 
-        // O estoque já foi reduzido na reserva, então aqui só muda o status
-        emprestimo.setStatus("retirado");
-        emprestimoRepository.save(emprestimo);
+    // Livro não reposto: baixa definitiva do exemplar
+    @PutMapping("/{id}/baixa")
+    public ResponseEntity<String> registrarBaixa(@PathVariable @NonNull UUID id) {
+        try {
+            emprestimoService.registrarBaixa(id);
+            return ResponseEntity.ok("Baixa registrada. O exemplar saiu do total do acervo.");
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(e.getReason());
+        }
+    }
 
-        return ResponseEntity.ok("Livro marcado como retirado com sucesso!");
+    // Botão "Entregar": o bibliotecário bipa o código da cópia física que está saindo
+    @PutMapping("/{id}/retirar")
+    public ResponseEntity<String> marcarComoRetirado(@PathVariable @NonNull UUID id,
+                                                     @RequestBody Map<String, String> payload) {
+        try {
+            ExemplarEntity exemplar = emprestimoService.entregar(id, payload.get("codigoExemplar"));
+            return ResponseEntity.ok("Entrega registrada! Exemplar " + exemplar.getCodigo() + " com o usuário.");
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(e.getReason());
+        }
     }
 }

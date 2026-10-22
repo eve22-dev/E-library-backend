@@ -21,6 +21,17 @@ public interface LivroRepository extends JpaRepository<LivroEntity, UUID> {
 
     boolean existsByCategoria_IdAndAtivoTrue(UUID categoriaId);
 
+    // Procura pelo ISBN ignorando hífens e espaços (ex.: 978-85-... é igual a 97885...)
+    @Query("SELECT l FROM LivroEntity l WHERE l.ativo = true " +
+           "AND REPLACE(REPLACE(l.isbn, '-', ''), ' ', '') = :isbn")
+    List<LivroEntity> buscarPorIsbnNormalizado(@Param("isbn") String isbn);
+
+    // Soma exemplares novos ao total e ao disponível de uma vez só
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE LivroEntity l SET l.qtdTotal = COALESCE(l.qtdTotal, 0) + :n, " +
+           "l.qtdDisponivel = COALESCE(l.qtdDisponivel, 0) + :n WHERE l.id = :id")
+    int acrescentarExemplares(@Param("id") UUID id, @Param("n") int n);
+
     // Tira 1 unidade do estoque de uma vez só. Retorna 0 se o livro está inativo ou sem unidades.
     // Por ser um único UPDATE, duas pessoas reservando ao mesmo tempo não passam do estoque.
     @Modifying(clearAutomatically = true, flushAutomatically = true)

@@ -1,8 +1,10 @@
 package com.e_library.modules.emprestimo.entity;
 
+import com.e_library.modules.exemplar.entity.ExemplarEntity;
 import com.e_library.modules.livro.entity.LivroEntity;
 import com.e_library.modules.user.entity.UserEntity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -28,6 +30,12 @@ public class EmprestimoEntity {
     @JoinColumn(name = "livro_id")
     private LivroEntity livro;
 
+    // Cópia física entregue ao usuário (definida quando o bibliotecário bipa o código na entrega)
+    @JsonIgnoreProperties("livro")
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "exemplar_id")
+    private ExemplarEntity exemplar;
+
     // Relacionamento com o Usuário
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id")
@@ -50,6 +58,10 @@ public class EmprestimoEntity {
 
     @Column(name = "renegociacao_em")
     private LocalDate renegociacaoEm;
+
+    // Prazo para o usuário entregar um exemplar novo, depois de um extravio
+    @Column(name = "reposicao_ate")
+    private LocalDate reposicaoAte;
 
     // --- Construtores ---
 
@@ -74,6 +86,12 @@ public class EmprestimoEntity {
 
     public LivroEntity getLivro() { return livro; }
     public void setLivro(LivroEntity livro) { this.livro = livro; }
+
+    public ExemplarEntity getExemplar() { return exemplar; }
+    public void setExemplar(ExemplarEntity exemplar) { this.exemplar = exemplar; }
+
+    public LocalDate getReposicaoAte() { return reposicaoAte; }
+    public void setReposicaoAte(LocalDate reposicaoAte) { this.reposicaoAte = reposicaoAte; }
 
     public UserEntity getUsuario() { return usuario; }
     public void setUsuario(UserEntity usuario) { this.usuario = usuario; }
