@@ -3,12 +3,10 @@ package com.e_library.security;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
-
 import java.util.Date;
 
 @Service
@@ -20,10 +18,12 @@ public class JwtService {
         this.key = Keys.hmacShaKeyFor(secret.getBytes());
     }
 
-    public String generateAccessToken(String email) {
+    // O papel (aluno, professor ou bibliotecario) vai dentro do token
+    public String generateAccessToken(String email, String role) {
         return Jwts.builder()
                 .subject(email)
                 .claim("type", "access")
+                .claim("role", role)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + 1000L * 60 * 15))
                 .signWith(key)
@@ -40,20 +40,18 @@ public class JwtService {
                 .compact();
     }
 
-    // 1. Extrai o email, verificando o padrão do Supabase primeiro
     public String extractEmail(String token) {
         Claims claims = extractClaims(token);
-        
+
         String email = claims.get("email", String.class);
-        
+
         if (email == null) {
             email = claims.getSubject();
         }
-        
+
         return email;
     }
 
-    // 2. O MÉTODO QUE ESTAVA A FALTAR! Ele é essencial para o Java decifrar o token
     private Claims extractClaims(String token) {
         return Jwts.parser()
                 .verifyWith(key)
@@ -69,5 +67,23 @@ public class JwtService {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    private boolean hasType(String token, String type) {
+        try {
+            return type.equals(extractClaims(token).get("type", String.class));
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    // Só token de ACESSO abre a API
+    public boolean isAccessToken(String token) {
+        return hasType(token, "access");
+    }
+
+    // Só token de REFRESH renova a sessão
+    public boolean isRefreshToken(String token) {
+        return hasType(token, "refresh");
     }
 }

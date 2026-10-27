@@ -67,7 +67,8 @@ public class JwtFilter extends OncePerRequestFilter {
         // 1) token emitido pelo próprio back; 2) token do login do Supabase
         String email = null;
 
-        if (jwtService.isValid(token)) {
+        // Só token de ACESSO do próprio back vale (token de refresh não abre a API)
+        if (jwtService.isValid(token) && jwtService.isAccessToken(token)) {
             email = jwtService.extractEmail(token);
         } else {
             email = supabaseAuth.emailFromAccessToken(token);

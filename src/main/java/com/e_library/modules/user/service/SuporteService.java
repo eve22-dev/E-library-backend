@@ -4,31 +4,36 @@ import com.e_library.modules.user.entity.MensagemSuporteEntity;
 import com.e_library.modules.user.entity.UserEntity;
 import com.e_library.modules.user.repository.MensagemSuporteRepository;
 import com.e_library.modules.user.repository.UserRepository;
-
-import org.springframework.lang.NonNull;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-
-import java.util.UUID;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class SuporteService {
 
-    private final MensagemSuporteRepository suporteRepository = null;
+    private final MensagemSuporteRepository suporteRepository;
+    private final UserRepository userRepository;
 
-    private final UserRepository userRepository = null;
+    public SuporteService(MensagemSuporteRepository suporteRepository, UserRepository userRepository) {
+        this.suporteRepository = suporteRepository;
+        this.userRepository = userRepository;
+    }
 
-    public void salvarMensagemSuporte(@NonNull UUID userId, String mensagem) {
-        // 1. Busca o usuário logado no banco de dados usando o UUID
-        UserEntity usuario = userRepository.findById(userId)
-            .orElseThrow(() -> new RuntimeException("Usuário não encontrado."));
+    // Registra a dúvida do usuário LOGADO para o bibliotecário
+    public void salvarMensagemSuporte(String emailDoUsuario, String mensagem) {
 
-        // 2. Monta a nova solicitação de atendimento
+        if (mensagem == null || mensagem.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Escreva a sua dúvida.");
+        }
+
+        UserEntity usuario = userRepository.findByEmail(emailDoUsuario)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuário não encontrado."));
+
         MensagemSuporteEntity ticket = new MensagemSuporteEntity();
         ticket.setUsuario(usuario);
-        ticket.setMensagem(mensagem);
-        ticket.setStatus("Pendente"); // Status inicial para o bibliotecário avaliar
+        ticket.setMensagem(mensagem.trim());
+        ticket.setStatus("pendente");
 
-        // 3. Salva no banco de dados
         suporteRepository.save(ticket);
     }
 }
