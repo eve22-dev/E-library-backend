@@ -96,6 +96,12 @@ public class EmprestimoController {
         return ResponseEntity.ok("Reserva cancelada com sucesso!");
     }
 
+    // Empréstimos e reservas do usuário logado (tela Meus Empréstimos e avisos da home)
+    @GetMapping("/meus")
+    public ResponseEntity<List<EmprestimoEntity>> meusEmprestimos(Authentication auth) {
+        return ResponseEntity.ok(emprestimoRepository.findByUsuario_EmailOrderByDataPrevistaAsc(auth.getName()));
+    }
+
     // Pedir renegociação do prazo (empréstimo quase vencendo ou já vencido)
     @PostMapping("/{id}/renegociar")
     public ResponseEntity<String> renegociar(@PathVariable @NonNull UUID id, Authentication auth) {

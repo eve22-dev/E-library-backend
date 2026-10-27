@@ -1,10 +1,7 @@
 package com.e_library.modules.user.service;
 
-
 import org.springframework.http.HttpStatus;
-import org.springframework.security.crypto.bcrypt.
-        BCryptPasswordEncoder;
-
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -16,6 +13,7 @@ import com.e_library.modules.user.dto.VerifyRequest;
 import com.e_library.modules.user.entity.UserEntity;
 import com.e_library.modules.user.repository.UserRepository;
 import com.e_library.security.JwtService;
+import com.e_library.security.SupabaseAuthClient;
 
 @Service
 public class AuthService {
@@ -24,15 +22,19 @@ public class AuthService {
 
     private final JwtService jwtService;
 
+    private final SupabaseAuthClient supabaseAuth;
+
     private final BCryptPasswordEncoder encoder =
             new BCryptPasswordEncoder();
 
     public AuthService(
             UserRepository userRepository,
-            JwtService jwtService
+            JwtService jwtService,
+            SupabaseAuthClient supabaseAuth
     ) {
         this.userRepository = userRepository;
         this.jwtService = jwtService;
+        this.supabaseAuth = supabaseAuth;
     }
 
     public void register(RegisterRequest request) {
@@ -62,68 +64,69 @@ public class AuthService {
 
     public AuthResponse login(LoginRequest request) {
 
-        UserEntity user =
-                userRepository.findByEmail(
-                        request.getEmail()
-                ).orElseThrow(() ->
-                        new ResponseStatusException(
-                                HttpStatus.UNAUTHORIZED,
-                                "Email ou senha inválidos"
-                        )
-                );
+        String email = request.getEmail() == null ? "" : request.getEmail().trim();
+        String senha = request.getPassword() == null ? "" : request.getPassword();
 
-        boolean passwordCorrect =
-                encoder.matches(
-                        request.getPassword(),
-                        user.getPassword()
-                );
-
-        if (!passwordCorrect) {
-            throw new RuntimeException(
-                    "Invalid password"
-            );
+        if (email.isEmpty() || senha.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Informe e-mail e senha.");
         }
 
-        String accessToken =
-                jwtService.generateAccessToken(
-                        user.getEmail()
-                );
+        // Tenta em minúsculas (como o Supabase guarda) e depois como foi digitado
+        UserEntity user = userRepository.findByEmail(email.toLowerCase())
+                .or(() -> userRepository.findByEmail(email))
+                .orElseThrow(() ->
+                        new ResponseStatusException(HttpStatus.UNAUTHORIZED, "E-mail ou senha inválidos"));
 
-        String refreshToken =
-                jwtService.generateRefreshToken(
-                        user.getEmail()
-                );
+        // A senha é conferida no Supabase Auth, onde a conta foi criada
+        if (!supabaseAuth.passwordIsValid(user.getEmail(), senha)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "E-mail ou senha inválidos");
+        }
 
-        return new AuthResponse(
-                accessToken,
-                refreshToken
-        );
+        if (!Boolean.TRUE.equals(user.getActive())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Usuário inativo");
+        }
+
+        return buildResponse(user);
     }
 
     public AuthResponse refresh(
             RefreshRequest request
     ) {
 
-        String email =
-                jwtService.extractEmail(
-                        request.getRefreshToken()
-                );
+        String refreshToken = request.getRefreshToken();
 
-        String newAccessToken =
-                jwtService.generateAccessToken(email);
+        if (refreshToken == null
+                || !jwtService.isValid(refreshToken)
+                || !jwtService.isRefreshToken(refreshToken)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Sessão expirada");
+        }
 
-        String newRefreshToken =
-                jwtService.generateRefreshToken(email);
+        String email = jwtService.extractEmail(refreshToken);
 
-        return new AuthResponse(
-                newAccessToken,
-                newRefreshToken
-        );
+        // Busca o usuário de novo: se o papel mudou ou ele foi desativado, vale o banco
+        UserEntity user = userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuário não encontrado"));
+
+        if (!Boolean.TRUE.equals(user.getActive())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Usuário inativo");
+        }
+
+        return buildResponse(user);
     }
 
     public boolean verify(
             VerifyRequest request
     ) {
         return jwtService.isValid(request.getToken());
+    }
+
+    private AuthResponse buildResponse(UserEntity user) {
+        return new AuthResponse(
+                jwtService.generateAccessToken(user.getEmail(), user.getRole()),
+                jwtService.generateRefreshToken(user.getEmail()),
+                user.getRole(),
+                user.getName()
+        );
     }
 }

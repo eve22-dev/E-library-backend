@@ -14,6 +14,9 @@ public interface EmprestimoRepository extends JpaRepository<EmprestimoEntity, UU
 
     List<EmprestimoEntity> findByUsuarioId(UUID usuarioId);
 
+    // Empréstimos e reservas de um usuário (pelo e-mail do login), do prazo mais próximo para o mais distante
+    List<EmprestimoEntity> findByUsuario_EmailOrderByDataPrevistaAsc(String email);
+
     // Livros que estão com o usuário (aguardando devolução), os que vencem primeiro no topo
     List<EmprestimoEntity> findByStatusInOrderByDataPrevistaAsc(Collection<String> status);
 
