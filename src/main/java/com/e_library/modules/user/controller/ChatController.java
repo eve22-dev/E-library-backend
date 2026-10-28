@@ -1,13 +1,17 @@
 package com.e_library.modules.user.controller;
 
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.e_library.modules.suporte.service.AnexoService;
 import com.e_library.modules.user.service.GeminiChatService;
 import com.e_library.modules.user.service.SuporteService;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -17,11 +21,13 @@ public class ChatController {
 
     private final GeminiChatService geminiChatService;
     private final SuporteService suporteService;
+    private final AnexoService anexoService;
 
-    // Os dois serviços agora são injetados pelo Spring (antes eram criados com new e ficavam sem configuração)
-    public ChatController(GeminiChatService geminiChatService, SuporteService suporteService) {
+    public ChatController(GeminiChatService geminiChatService, SuporteService suporteService,
+                          AnexoService anexoService) {
         this.geminiChatService = geminiChatService;
         this.suporteService = suporteService;
+        this.anexoService = anexoService;
     }
 
     // Endpoint 1: Conversa normal com o bot
@@ -38,11 +44,15 @@ public class ChatController {
         return ResponseEntity.ok(respostaGemini);
     }
 
-    // Endpoint 2: Salva a dúvida do usuário logado para o bibliotecário ler
-    @PostMapping("/suporte")
-    public ResponseEntity<String> enviarParaAtendente(@RequestBody Map<String, String> payload, Authentication auth) {
+    // Endpoint 2: dúvida do usuário logado para o bibliotecário (texto + anexos opcionais)
+    @PostMapping(value = "/suporte", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<String> enviarParaAtendente(
+            @RequestParam("duvida") String duvida,
+            @RequestParam(value = "arquivos", required = false) List<MultipartFile> arquivos,
+            Authentication auth) {
         try {
-            suporteService.salvarMensagemSuporte(auth.getName(), payload.get("duvida"));
+            List<AnexoService.ArquivoValidado> validos = anexoService.validar(arquivos);
+            suporteService.salvarMensagemSuporte(auth.getName(), duvida, validos);
             return ResponseEntity.ok("Sua mensagem foi enviada. Um bibliotecário responderá em breve!");
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(e.getReason());
