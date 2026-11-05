@@ -45,8 +45,17 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.DELETE, "/api/livros/**").hasAnyAuthority("BIBLIOTECARIO", "bibliotecario", "ROLE_BIBLIOTECARIO", "ROLE_bibliotecario")
                 
                 // PAINEL DO BIBLIOTECÁRIO: listar solicitações/emprestados, entregar e registrar devolução
-                .requestMatchers(HttpMethod.GET, "/api/emprestimos/solicitados", "/api/emprestimos/retirados", "/api/emprestimos/renegociacoes", "/api/multas").hasAuthority("ROLE_BIBLIOTECARIO")
-                .requestMatchers(HttpMethod.PUT, "/api/emprestimos/*/retirar", "/api/emprestimos/*/devolver", "/api/emprestimos/*/extravio", "/api/emprestimos/*/renegociacao/*").hasAuthority("ROLE_BIBLIOTECARIO")
+                .requestMatchers(HttpMethod.GET, "/api/emprestimos/solicitados", "/api/emprestimos/retirados", "/api/emprestimos/renegociacoes", "/api/emprestimos/extraviados", "/api/multas").hasAuthority("ROLE_BIBLIOTECARIO")
+                .requestMatchers(HttpMethod.PUT, "/api/emprestimos/*/retirar", "/api/emprestimos/*/devolver", "/api/emprestimos/*/extravio", "/api/emprestimos/*/reposicao", "/api/emprestimos/*/baixa", "/api/emprestimos/*/renegociacao/*").hasAuthority("ROLE_BIBLIOTECARIO")
+
+                // SUPORTE DE ACESSO: qualquer pessoa pode abrir um pedido (a página pública não exige login)
+                .requestMatchers(HttpMethod.POST, "/api/suporte/acesso").permitAll()
+
+                // Painel de suporte, anexos e relatórios: só bibliotecário
+                .requestMatchers("/api/suporte/**", "/api/anexos/**", "/api/relatorios/**").hasAuthority("ROLE_BIBLIOTECARIO")
+
+                // EXEMPLARES (cadastro, consulta e códigos): só bibliotecário
+                .requestMatchers("/api/exemplares/**").hasAuthority("ROLE_BIBLIOTECARIO")
 
                 // PERMITE QUE QUALQUER UTILIZADOR LOGADO (ALUNOS) POSSA APENAS LER/VER OS LIVROS E CATEGORIAS
                 .requestMatchers(HttpMethod.GET, "/api/livros/**").authenticated()
