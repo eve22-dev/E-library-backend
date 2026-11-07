@@ -37,7 +37,6 @@ public class ReclamacaoController {
     }
 
     // A reclamação NÃO vai para o painel: sai por e-mail para a ouvidoria.
-    // No banco fica só o protocolo (quem, quando e se o e-mail foi enviado).
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<String> registrar(
             @RequestParam("descricao") String descricao,
@@ -63,17 +62,14 @@ public class ReclamacaoController {
             String protocolo = "REC-" + LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE)
                     + "-" + id.toString().substring(0, 4).toUpperCase();
 
-            String statusEnvio = "enviada";
-
             try {
                 emailService.enviarReclamacao(protocolo, usuario.getName(), usuario.getEmail(), texto, anexos);
             } catch (ResponseStatusException falhaEmail) {
-                statusEnvio = "falhou";
-                gravarProtocolo(id, usuario.getId(), protocolo, anexos.size(), statusEnvio);
+                gravarProtocolo(id, usuario, protocolo, anexos.size(), "falhou");
                 return ResponseEntity.status(falhaEmail.getStatusCode()).body(falhaEmail.getReason());
             }
 
-            gravarProtocolo(id, usuario.getId(), protocolo, anexos.size(), statusEnvio);
+            gravarProtocolo(id, usuario, protocolo, anexos.size(), "enviada");
 
             return ResponseEntity.ok("Reclamação enviada à ouvidoria! Protocolo: " + protocolo);
 
@@ -82,9 +78,11 @@ public class ReclamacaoController {
         }
     }
 
-    private void gravarProtocolo(UUID id, UUID userId, String protocolo, int qtdAnexos, String statusEnvio) {
+    // Guarda só o protocolo (quem, quando, se o e-mail saiu); o texto vai por e-mail
+    private void gravarProtocolo(UUID id, UserEntity usuario, String protocolo, int qtdAnexos, String statusEnvio) {
         jdbc.update(
-                "INSERT INTO reclamacoes (id, user_id, protocolo, qtd_anexos, status_envio) VALUES (?, ?, ?, ?, ?)",
-                id, userId, protocolo, qtdAnexos, statusEnvio);
+                "INSERT INTO reclamacoes (id, user_id, protocolo, qtd_anexos, status_envio, tipo, nome_informado, email_informado) " +
+                "VALUES (?, ?, ?, ?, ?, 'reclamacao', ?, ?)",
+                id, usuario.getId(), protocolo, qtdAnexos, statusEnvio, usuario.getName(), usuario.getEmail());
     }
 }

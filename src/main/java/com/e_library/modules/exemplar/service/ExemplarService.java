@@ -98,6 +98,12 @@ public class ExemplarService {
 
             String isbn = normalizarIsbn(dados.isbn());
 
+            // Sem ISBN não tem como identificar a obra: o cadastro não é finalizado
+            if (isbn.isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "O ISBN é obrigatório para cadastrar um livro novo.");
+            }
+
             // Mesmo ISBN = mesma obra: só acrescenta exemplares
             if (!isbn.isEmpty()) {
                 List<LivroEntity> existentes = livroRepository.buscarPorIsbnNormalizado(isbn);

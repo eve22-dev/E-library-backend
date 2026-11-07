@@ -11,4 +11,7 @@ public interface MensagemSuporteRepository extends JpaRepository<MensagemSuporte
     List<MensagemSuporteEntity> findAllByOrderByCriadoEmDesc();
 
     List<MensagemSuporteEntity> findByStatusIgnoreCaseOrderByCriadoEmDesc(String status);
+
+    // Conversas de um usuário (pelo e-mail do login)
+    List<MensagemSuporteEntity> findByUsuario_EmailOrderByCriadoEmDesc(String email);
 }
