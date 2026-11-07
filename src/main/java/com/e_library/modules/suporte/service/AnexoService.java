@@ -94,18 +94,30 @@ public class AnexoService {
 
     // Guarda os anexos de uma mensagem ao bibliotecário
     public void salvar(UUID mensagemId, List<ArquivoValidado> arquivos) {
+        salvar(mensagemId, null, arquivos);
+    }
+
+    // Guarda os anexos de uma mensagem ou de uma resposta da conversa (respostaId pode ser null)
+    public void salvar(UUID mensagemId, UUID respostaId, List<ArquivoValidado> arquivos) {
         for (ArquivoValidado a : arquivos) {
             jdbc.update(
-                    "INSERT INTO anexos (mensagem_id, nome, tipo, tamanho, conteudo) VALUES (?, ?, ?, ?, ?)",
-                    mensagemId, a.nome(), a.tipo(), a.conteudo().length, a.conteudo());
+                    "INSERT INTO anexos (mensagem_id, resposta_id, nome, tipo, tamanho, conteudo) VALUES (?, ?, ?, ?, ?, ?)",
+                    mensagemId, respostaId, a.nome(), a.tipo(), a.conteudo().length, a.conteudo());
         }
     }
 
-    // Lista os anexos de uma mensagem (sem o conteúdo)
+    // Anexos da mensagem inicial (sem o conteúdo)
     public List<Map<String, Object>> listarDaMensagem(UUID mensagemId) {
         return jdbc.queryForList(
-                "SELECT id, nome, tipo, tamanho FROM anexos WHERE mensagem_id = ? ORDER BY criado_em",
+                "SELECT id, nome, tipo, tamanho FROM anexos WHERE mensagem_id = ? AND resposta_id IS NULL ORDER BY criado_em",
                 mensagemId);
+    }
+
+    // Anexos de uma resposta da conversa (sem o conteúdo)
+    public List<Map<String, Object>> listarDaResposta(UUID respostaId) {
+        return jdbc.queryForList(
+                "SELECT id, nome, tipo, tamanho FROM anexos WHERE resposta_id = ? ORDER BY criado_em",
+                respostaId);
     }
 
     // Busca um anexo para download
@@ -116,6 +128,12 @@ public class AnexoService {
                 id);
 
         return achados.stream().findFirst();
+    }
+
+    // Mensagem à qual um anexo pertence (para checar se o usuário pode baixá-lo)
+    public Optional<UUID> mensagemDoAnexo(UUID anexoId) {
+        return jdbc.query("SELECT mensagem_id FROM anexos WHERE id = ?",
+                (rs, i) -> (UUID) rs.getObject("mensagem_id"), anexoId).stream().findFirst();
     }
 
     // Reconhece o tipo pelo conteúdo (e não só pela extensão)

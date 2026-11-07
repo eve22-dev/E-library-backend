@@ -19,8 +19,7 @@ import java.util.Map;
 
 /**
  * Envia e-mails pelo Brevo (por HTTPS, porque o Render gratuito bloqueia as portas SMTP).
- * Variáveis de ambiente: BREVO_API_KEY, OUVIDORIA_REMETENTE (e-mail remetente verificado no Brevo)
- * e, opcionalmente, OUVIDORIA_EMAIL (padrão: heeatec@gmail.com).
+ * Variáveis: BREVO_API_KEY, OUVIDORIA_REMETENTE (remetente verificado no Brevo) e, opcional, OUVIDORIA_EMAIL.
  */
 @Service
 public class EmailService {
@@ -44,28 +43,58 @@ public class EmailService {
         this.ouvidoria = ouvidoria;
     }
 
-    // Envia a reclamação para a ouvidoria. O "responder" do e-mail vai direto para o usuário.
+    // Reclamação de um usuário logado: vai para a ouvidoria, com os anexos
     public void enviarReclamacao(String protocolo, String nomeUsuario, String emailUsuario, String descricao,
                                  List<AnexoService.ArquivoValidado> anexos) {
+
+        String html = "<h2>Nova reclamação - E-Library</h2>"
+                + linha("Protocolo", protocolo)
+                + linha("Nome", nomeUsuario)
+                + linha("E-mail institucional", emailUsuario)
+                + "<p><b>Reclamação:</b></p>"
+                + "<p>" + paragrafo(descricao) + "</p>"
+                + "<p><i>Anexos: " + (anexos.isEmpty() ? "nenhum" : anexos.size() + " arquivo(s) neste e-mail") + "</i></p>";
+
+        enviarParaDestino(ouvidoria, "[E-Library] Reclamação " + protocolo + " - " + umaLinha(nomeUsuario),
+                html, emailUsuario, nomeUsuario, anexos);
+    }
+
+    // Pedido de quem não consegue entrar no sistema: vai para a ouvidoria
+    public void enviarSuporteAcesso(String protocolo, String nome, String email, String descricao) {
+
+        String html = "<h2>Suporte de acesso - E-Library</h2>"
+                + linha("Protocolo", protocolo)
+                + linha("Nome", nome)
+                + linha("E-mail institucional informado", email)
+                + "<p><b>Descrição do problema:</b></p>"
+                + "<p>" + paragrafo(descricao) + "</p>"
+                + "<p><i>Pedido feito pela página pública, sem login. Responda a este e-mail para falar com a pessoa.</i></p>";
+
+        enviarParaDestino(ouvidoria, "[E-Library] Suporte de acesso " + protocolo + " - " + umaLinha(nome),
+                html, email, nome, List.of());
+    }
+
+    // Aviso de prazo para o próprio aluno/professor
+    public void enviarAviso(String destinatario, String assunto, String html) {
+        enviarParaDestino(destinatario, assunto, html, remetente, "E-Library", List.of());
+    }
+
+    // ---------------- envio ----------------
+
+    private void enviarParaDestino(String destinatario, String assunto, String html,
+                                   String respostaPara, String nomeResposta,
+                                   List<AnexoService.ArquivoValidado> anexos) {
 
         if (apiKey.isBlank() || remetente.isBlank()) {
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
                     "O envio de e-mail ainda não está configurado no servidor.");
         }
 
-        String html = "<h2>Nova reclamação - E-Library</h2>"
-                + "<p><b>Protocolo:</b> " + HtmlUtils.htmlEscape(protocolo) + "</p>"
-                + "<p><b>Nome:</b> " + HtmlUtils.htmlEscape(nomeUsuario) + "</p>"
-                + "<p><b>E-mail institucional:</b> " + HtmlUtils.htmlEscape(emailUsuario) + "</p>"
-                + "<p><b>Reclamação:</b></p>"
-                + "<p>" + HtmlUtils.htmlEscape(descricao).replace("\n", "<br>") + "</p>"
-                + "<p><i>Anexos: " + (anexos.isEmpty() ? "nenhum" : anexos.size() + " arquivo(s) neste e-mail") + "</i></p>";
-
         Map<String, Object> corpo = new LinkedHashMap<>();
         corpo.put("sender", Map.of("name", "E-Library", "email", remetente));
-        corpo.put("to", List.of(Map.of("email", ouvidoria)));
-        corpo.put("replyTo", Map.of("email", emailUsuario, "name", nomeUsuario));
-        corpo.put("subject", "[E-Library] Reclamação " + protocolo + " - " + nomeUsuario);
+        corpo.put("to", List.of(Map.of("email", destinatario)));
+        corpo.put("replyTo", Map.of("email", respostaPara, "name", umaLinha(nomeResposta)));
+        corpo.put("subject", assunto);
         corpo.put("htmlContent", html);
 
         if (!anexos.isEmpty()) {
@@ -87,8 +116,10 @@ public class EmailService {
             HttpResponse<String> resposta = http.send(request, HttpResponse.BodyHandlers.ofString());
 
             if (resposta.statusCode() < 200 || resposta.statusCode() >= 300) {
+                System.err.println("Brevo respondeu " + resposta.statusCode() + ": "
+                        + resposta.body().substring(0, Math.min(300, resposta.body().length())));
                 throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
-                        "Não foi possível enviar o e-mail para a ouvidoria agora. Tente novamente em instantes.");
+                        "Não foi possível enviar o e-mail agora. Tente novamente em instantes.");
             }
 
         } catch (ResponseStatusException e) {
@@ -98,7 +129,19 @@ public class EmailService {
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Envio interrompido. Tente novamente.");
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
-                    "Não foi possível enviar o e-mail para a ouvidoria agora. Tente novamente em instantes.");
+                    "Não foi possível enviar o e-mail agora. Tente novamente em instantes.");
         }
+    }
+
+    private String linha(String rotulo, String valor) {
+        return "<p><b>" + rotulo + ":</b> " + HtmlUtils.htmlEscape(valor == null ? "" : valor) + "</p>";
+    }
+
+    private String paragrafo(String texto) {
+        return HtmlUtils.htmlEscape(texto == null ? "" : texto).replace("\n", "<br>");
+    }
+
+    private String umaLinha(String texto) {
+        return texto == null ? "" : texto.replaceAll("[\\r\\n]+", " ").trim();
     }
 }

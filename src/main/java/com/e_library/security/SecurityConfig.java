@@ -52,7 +52,10 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/suporte/acesso").permitAll()
 
                 // Painel de suporte, anexos e relatórios: só bibliotecário
-                .requestMatchers("/api/suporte/**", "/api/anexos/**", "/api/relatorios/**").hasAuthority("ROLE_BIBLIOTECARIO")
+                .requestMatchers("/api/suporte/**", "/api/relatorios/**").hasAuthority("ROLE_BIBLIOTECARIO")
+
+                // ACERVO COMPLETO (ativos e inativos, com filtros): só bibliotecário
+                .requestMatchers(HttpMethod.GET, "/api/livros/acervo").hasAuthority("ROLE_BIBLIOTECARIO")
 
                 // EXEMPLARES (cadastro, consulta e códigos): só bibliotecário
                 .requestMatchers("/api/exemplares/**").hasAuthority("ROLE_BIBLIOTECARIO")
