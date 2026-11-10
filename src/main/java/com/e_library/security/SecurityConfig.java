@@ -57,6 +57,9 @@ public class SecurityConfig {
                 // ACERVO COMPLETO (ativos e inativos, com filtros): só bibliotecário
                 .requestMatchers(HttpMethod.GET, "/api/livros/acervo").hasAuthority("ROLE_BIBLIOTECARIO")
 
+                // CRIAÇÃO DE USUÁRIOS: só o administrador de TI
+                .requestMatchers("/api/admin/**").hasAuthority("ROLE_TI")
+
                 // EXEMPLARES (cadastro, consulta e códigos): só bibliotecário
                 .requestMatchers("/api/exemplares/**").hasAuthority("ROLE_BIBLIOTECARIO")
 
