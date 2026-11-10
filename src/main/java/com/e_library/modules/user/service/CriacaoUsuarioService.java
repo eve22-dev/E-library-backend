@@ -148,6 +148,41 @@ public class CriacaoUsuarioService {
         }
     }
 
+    // Troca a senha de um login existente (o TI redefine a senha de um usuário)
+    public void redefinirSenha(UUID id, String senha) {
+
+        if (senha == null || senha.length() < 8) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A senha precisa ter pelo menos 8 caracteres.");
+        }
+        if (supabaseUrl.isBlank() || serviceKey.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "SUPABASE_URL ou SUPABASE_SERVICE_ROLE_KEY não configuradas no servidor.");
+        }
+
+        try {
+            HttpRequest request = HttpRequest.newBuilder(URI.create(supabaseUrl + "/auth/v1/admin/users/" + id))
+                    .header("apikey", serviceKey)
+                    .header("Authorization", "Bearer " + serviceKey)
+                    .header("Content-Type", "application/json")
+                    .method("PUT", HttpRequest.BodyPublishers.ofString(mapper.writeValueAsString(Map.of("password", senha))))
+                    .build();
+
+            HttpResponse<String> resposta = http.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (resposta.statusCode() != 200) {
+                System.err.println("Supabase Admin (senha) respondeu " + resposta.statusCode() + ": " + resposta.body());
+                throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Não foi possível redefinir a senha agora.");
+            }
+        } catch (ResponseStatusException e) {
+            throw e;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Operação interrompida. Tente novamente.");
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Não foi possível redefinir a senha agora.");
+        }
+    }
+
     private int contar(String sql, Object valor) {
         Integer total = jdbc.queryForObject(sql, Integer.class, valor);
         return total == null ? 0 : total;

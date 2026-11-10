@@ -90,7 +90,7 @@ public class EmprestimoService {
                     "Este livro não está mais disponível.");
         }
 
-        int dias = "professor".equalsIgnoreCase(usuario.getRole()) ? 30 : 14;
+        int dias = ("professor".equalsIgnoreCase(usuario.getRole()) || "ti".equalsIgnoreCase(usuario.getRole()) || "bibliotecario".equalsIgnoreCase(usuario.getRole())) ? 30 : 14;
 
         EmprestimoEntity novo = new EmprestimoEntity();
         novo.setUsuario(usuario);

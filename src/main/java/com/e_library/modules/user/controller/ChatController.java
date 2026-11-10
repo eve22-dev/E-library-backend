@@ -130,6 +130,11 @@ public class ChatController {
         boolean bibliotecario = auth.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equalsIgnoreCase("ROLE_BIBLIOTECARIO"));
 
+        boolean ti = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equalsIgnoreCase("ROLE_TI"));
+
+        if (ti) return "ti";
+
         return professor ? "professor" : (bibliotecario ? "bibliotecario" : "aluno");
     }
 
