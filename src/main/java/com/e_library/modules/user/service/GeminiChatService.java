@@ -121,13 +121,13 @@ public class GeminiChatService {
     }
 
     private String instrucoes(String papel) {
-        String prazo = "professor".equals(papel) ? "30 dias (professor)" : "14 dias (aluno)";
+        String prazo = ("professor".equals(papel) || "ti".equals(papel) || "bibliotecario".equals(papel)) ? "30 dias (professor ou administrador de TI)" : "14 dias (aluno)";
 
         return "Você é o Bibliotecário Virtual da E-Library, a biblioteca digital da faculdade. "
             + "Converse em português do Brasil, de forma educada, simples e curta (no máximo 5 frases). "
             + "O usuário que está falando com você é: " + papel + ". Use o prazo dele quando falar de empréstimo: " + prazo + ".\n\n"
             + "FATOS DA BIBLIOTECA (use só isto; não invente nada além disso):\n"
-            + "- Prazos de empréstimo: 14 dias para alunos e 30 dias para professores, contados a partir da reserva.\n"
+            + "- Prazos de empréstimo: 14 dias para alunos e 30 dias para professores, bibliotecários e administradores de TI, contados a partir da reserva.\n"
             + "- Reservar: pesquisar o livro no catálogo da tela inicial e clicar em Reservar (só há reserva se existir exemplar disponível). "
             + "Depois retirar o livro no balcão com o bibliotecário. Cada pessoa pode ter uma reserva ou empréstimo ativo por livro.\n"
             + "- Cancelar reserva: em Meus Empréstimos, enquanto o livro ainda não foi retirado.\n"

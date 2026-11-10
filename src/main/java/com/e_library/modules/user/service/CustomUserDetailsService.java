@@ -26,12 +26,17 @@ public class CustomUserDetailsService implements UserDetailsService {
         UserEntity user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
+        // Usuário inativo não é autenticado: nem com token já emitido
+        if (!Boolean.TRUE.equals(user.getActive())) {
+            throw new UsernameNotFoundException("Usuário inativo");
+        }
+
         String papel = user.getRole() == null ? "aluno" : user.getRole().toLowerCase();
 
         List<GrantedAuthority> permissoes = new ArrayList<>();
         permissoes.add(new SimpleGrantedAuthority("ROLE_" + papel.toUpperCase()));
 
-        // O TI tem todos os poderes do bibliotecário, mais a criação de usuários
+        // O TI tem todos os poderes do bibliotecário, mais a criação e manutenção de usuários
         if ("ti".equals(papel)) {
             permissoes.add(new SimpleGrantedAuthority("ROLE_BIBLIOTECARIO"));
         }
